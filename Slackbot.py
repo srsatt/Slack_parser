@@ -51,9 +51,9 @@ def get_channel_history(channel_id):
         get_channel_messages(channel_id,latest)
 
     return messages
-def get_tasks(messages):
-    return [ (int(re.search('^([ТT])\d+', message['text']).group(0)[1:]),message)  for message in messages if message['type']=="message" and re.match('^([ТT])\d+', message['text'])]
-
+def filter_messages(messages,regexp):
+    return [ (re.search(regexp, message['text']).group(0),message)  for message in messages if message['type']=="message" and re.match(regexp,message['text'])]
+#'^([ТT])\d+'
 def emoji_comp(reaction1,reaction2):
     emoji_rankings=["","💤","😡","😅","👍","🤘",]
     emoji_rankings.index(reaction1)
@@ -69,7 +69,7 @@ def emoji_comp(reaction1,reaction2):
 def save_tasks(tasks):
     for x in tasks:
         task={
-            "task_id":x[0],
+            "task_id":int(x[0][1:]),
             "text":x[1]["text"],
             }
         try:
@@ -126,6 +126,20 @@ def add_columns(spreadsheetId,col_numbers):
 
     service.spreadsheets().batchUpdate(spreadsheetId = spreadsheetId,body = body).execute()
 
+def get_progression():
+    progression={}
+    for user in users_db.find():
+        if(user["slack_name"]):
+            progression[user["slack_name"]]=[""]*tasks_db.count()
+    print(progression)
+    for task in tasks_db.find():
+        for reaction in task["reactions"]:
+            for user in reaction["users"]:
+                progression[users_db.find_one({"slack_id":user})["slack_name"]][task["task_id"]]=reaction["name"]
+    print (progression)
+    return progression
+                #new_data[row][col]=emoji_comp(new_data[row][col],emoji[reaction["name"]])
+
 def get_range(tasks_number):
     tasks_number+=2 #
     result = []
@@ -143,12 +157,7 @@ def update_table(spreadsheetId):
     for i in range(tasks_db.count()):
         new_data[0][i]="T"+str(i+1)
     insertion_number=tasks_db.count()-old_data[0].index("SMART цель на сентябрь")
-    '''
-    while(re.match('^([ТT])\d+', old_data[0][-1-insertion_number])==None):
-        insertion_number+=1
-        print(old_data[0][-1-insertion_number])
-        print("we need incertion")
-        '''
+
     add_columns(spreadsheetId,insertion_number)
     for task in tasks_db.find():
         for reaction in task["reactions"]:
@@ -183,7 +192,9 @@ if __name__ == '__main__':
                     'version=v4')
     service = discovery.build('sheets', 'v4', http=http,discoveryServiceUrl=discoveryUrl)
     #invoke_from_json()
-    save_tasks(get_tasks(get_channel_history(channel_id)))
-    update_table(spreadsheetId)
-
+    save_tasks(filter_messages(get_channel_history(channel_id),'^([ТT])\d+'))
+    #update_table(spreadsheetId)
+    #progression=get_progression()
+    #for user in progression:
+    #    print(user,progression[user])
     conn.close()
