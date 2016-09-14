@@ -16,11 +16,13 @@ emoji={
 
 
 #https://api.slack.com - Slack API
-Slacktoken="your token"
+Slacktoken="Slack-token"
 #https://api.slack.com/docs/oauth  - to get token
 
+#https://developers.google.com/sheets/reference/query-parameters - Sheets API
+Googletoken="your token"
 #https://console.developers.google.com/apis/credentials - to get token
-spreadsheetId="Your spreadsheetId"
+spreadsheetId="1JwA5cmuTQUWq--J0VnYKmULkcczw8YP83MHyDlf0BoE"
 #id of google sheets
 
 MONGO_ADDRESS='127.0.0.1'
@@ -95,6 +97,7 @@ def get_table(spreadsheetId,rangeName):
     return values
 
 def put_in_table(spreadsheetId,table_range,values):
+
     results = service.spreadsheets().values().batchUpdate(spreadsheetId = spreadsheetId, body = {
     "valueInputOption": "USER_ENTERED",
     "data": [
@@ -105,33 +108,58 @@ def put_in_table(spreadsheetId,table_range,values):
     ]
     }).execute()
 
+def add_columns(spreadsheetId,col_numbers):
+    results = service.spreadsheets().values().batchUpdate(spreadsheetId = spreadsheetId, body = {
+      "requests":
+        {
+          "insertDimension": {
+            "range": {
+              "sheetId": "Sheet1!",
+              "dimension": "COLUMNS",
+              "startIndex": tasks_db.count()+2-col_numbers,
+              "endIndex": tasks_db.count()+2
+            },
+            "inheritBefore": true
+          }
+        }
+    }).execute()
+
 def get_range(tasks_number):
     tasks_number+=2 #
     result = []
     while tasks_number:
         tasks_number, rem = divmod(tasks_number-1, 26)
         result[:0] = chr(ord("A")+rem)
-    return "B5:"+''.join(result)+"59"
+    return "C4:"+''.join(result)+"59", ''.join(result)
 
 def update_table(spreadsheetId):
     tasks_number=tasks_db.count()
-    table_range=get_range(tasks_number)
+    table_range, last_col=get_range(tasks_number)
     old_data=get_table(spreadsheetId,table_range)
-    new_data=[["" for i in range(tasks_number)] for j in range(users_db.count())]
+    print (old_data[0][-2])
 
+    insertion_number=0
+    while(re.match('^([ТT])\d+', old_data[0][-1-insertion_number])==None):
+        insertion_number+=1
+        print(old_data[0][-1-insertion_number])
+        print("we need incertion")
+    print (insertion_number)
+
+    new_data=[["" for i in range(tasks_number)] for j in range(users_db.count())]
     for task in tasks_db.find():
         for reaction in task["reactions"]:
             for user in reaction["users"]:
-
-                row=int(users_db.find_one({"slack_id":user})["row"])-5
-                col=task["task_id"]
-                if(new_data[row][col]!=""):
-                    new_data[row][col]=emoji_comp(new_data[row][col],emoji[reaction["name"]])
-                else:
-                    try:
-                        new_data[row][col]=emoji_comp(old_data[row][col],emoji[reaction["name"]])
-                    except IndexError:
-                        new_data[row][col]=emoji[reaction["name"]]
+                if (users_db.find_one({"slack_id":user})):
+                    row=int(users_db.find_one({"slack_id":user})["row"])-5
+                    col=task["task_id"]
+                    if(new_data[row][col]!=""):
+                        if (reaction["name"] in emoji.keys()):
+                            new_data[row][col]=emoji_comp(new_data[row][col],emoji[reaction["name"]])
+                    else:
+                        try:
+                            new_data[row][col]=emoji_comp(old_data[row][col],emoji[reaction["name"]])
+                        except IndexError:
+                            new_data[row][col]=emoji[reaction["name"]]
 
     put_in_table(spreadsheetId,table_range,new_data)
 
@@ -148,8 +176,11 @@ if __name__ == '__main__':
                     'version=v4')
     service = discovery.build('sheets', 'v4', http=http,discoveryServiceUrl=discoveryUrl)
 
-    save_tasks(get_tasks(get_channel_history(channel_id)))
+    #save_tasks(get_tasks(get_channel_history(channel_id)))
     #get_table(spreadsheetId,"B5:R59")
+
+
+
 
     update_table(spreadsheetId)
     conn.close()
