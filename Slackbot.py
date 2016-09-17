@@ -1,13 +1,16 @@
 #!/usr/local/bin/Python3.5
 import requests
 import json
-import time
+import oauth2 as oauth
+
 import pymongo
 import re
 from apiclient import discovery
 import httplib2
 from oauth2client.service_account import ServiceAccountCredentials
+
 emoji={
+
     "+1":"👍",
     "the_horns":"🤘",
     "sweat_smile":"😅",
@@ -16,7 +19,7 @@ emoji={
 
 
 #https://api.slack.com - Slack API
-Slacktoken="xoxp-77214310949-77277844871-79141960373-deac1eb6e6"
+
 #https://api.slack.com/docs/oauth  - to get token
 
 #https://developers.google.com/sheets/reference/query-parameters - Sheets API
@@ -32,6 +35,14 @@ channel_id="C2A76BCRZ"
 #google auth
 CREDENTIALS_FILE = 'google.json'
 
+
+def get_slack_token(filename):
+    f1=open(filename,"r")
+    token=f1.read()[:-1]
+    f1.close()
+    return token
+
+
 def get_channels():
     url="https://slack.com/api/channels.list?token="+Slacktoken
     r=requests.get(url)
@@ -41,6 +52,7 @@ def get_channel_messages(channel_id,latest='now'):
     url="https://slack.com/api/channels.history?token="+Slacktoken+"&channel="+channel_id+"&unreads=1&pretty=1"
     r=requests.get(url)
     messages_body=json.loads(r.text)
+    #print(messages_body)
     return messages_body["messages"], int(messages_body["unread_count_display"]), messages_body["messages"][-1]['ts']
 
 def get_channel_history(channel_id):
@@ -165,22 +177,19 @@ def update_table(spreadsheetId):
                 if (users_db.find_one({"slack_id":user})):
                     row=int(users_db.find_one({"slack_id":user})["row"])-4
                     col=task["task_id"]
-                    if(new_data[row][col]!=""):
+                    if(new_data[row][col]!="" and col<old_data[0].index("SMART цель на сентябрь")):
                         if (reaction["name"] in emoji.keys()):
                             new_data[row][col]=emoji_comp(new_data[row][col],emoji[reaction["name"]])
                     else:
-                        try:
-                            if (old_data[row][col] not in emoji.values()):
-                                new_data[row][col]=emoji[reaction["name"]]
-                            else:
-                                new_data[row][col]=emoji_comp(old_data[row][col],emoji[reaction["name"]])
-                        except IndexError:
+                        if (reaction["name"] in emoji.keys()):
                             new_data[row][col]=emoji[reaction["name"]]
+
 
     put_in_table(spreadsheetId,table_range,new_data)
 
 
 if __name__ == '__main__':
+    Slacktoken=get_slack_token("slack_token")
     conn = pymongo.MongoClient(MONGO_ADDRESS,MONGO_PORT)
     db=conn['Slackbot']
     users_db=db['Slackbot_users']
@@ -192,8 +201,8 @@ if __name__ == '__main__':
                     'version=v4')
     service = discovery.build('sheets', 'v4', http=http,discoveryServiceUrl=discoveryUrl)
     #invoke_from_json()
-    save_tasks(filter_messages(get_channel_history(channel_id),'^([ТT])\d+'))
-    #update_table(spreadsheetId)
+    save_tasks(filter_messages(get_channel_history(channel_id),'^([T])\d+'))
+    update_table(spreadsheetId)
     #progression=get_progression()
     #for user in progression:
     #    print(user,progression[user])
