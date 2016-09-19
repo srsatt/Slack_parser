@@ -52,7 +52,7 @@ def get_channel_messages(channel_id,latest='now'):
     url="https://slack.com/api/channels.history?token="+Slacktoken+"&channel="+channel_id+"&unreads=1&pretty=1"
     r=requests.get(url)
     messages_body=json.loads(r.text)
-    #print(messages_body)
+
     return messages_body["messages"], int(messages_body["unread_count_display"]), messages_body["messages"][-1]['ts']
 
 def get_channel_history(channel_id):
@@ -143,12 +143,12 @@ def get_progression():
     for user in users_db.find():
         if(user["slack_name"]):
             progression[user["slack_name"]]=[""]*tasks_db.count()
-    print(progression)
+
     for task in tasks_db.find():
         for reaction in task["reactions"]:
             for user in reaction["users"]:
                 progression[users_db.find_one({"slack_id":user})["slack_name"]][task["task_id"]]=reaction["name"]
-    print (progression)
+
     return progression
                 #new_data[row][col]=emoji_comp(new_data[row][col],emoji[reaction["name"]])
 
@@ -158,7 +158,7 @@ def get_range(tasks_number):
     while tasks_number:
         tasks_number, rem = divmod(tasks_number-1, 26)
         result[:0] = chr(ord("A")+rem)
-    print("C4:"+''.join(result)+"59", ''.join(result))
+
     return "C4:"+''.join(result)+"59", ''.join(result)
 
 def update_table(spreadsheetId):
@@ -201,9 +201,7 @@ if __name__ == '__main__':
                     'version=v4')
     service = discovery.build('sheets', 'v4', http=http,discoveryServiceUrl=discoveryUrl)
     #invoke_from_json()
-    save_tasks(filter_messages(get_channel_history(channel_id),'^([T])\d+'))
+    save_tasks(filter_messages(get_channel_history(channel_id),'^([TТ])\d+'))
     update_table(spreadsheetId)
-    #progression=get_progression()
-    #for user in progression:
-    #    print(user,progression[user])
+
     conn.close()
