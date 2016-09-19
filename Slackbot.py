@@ -1,10 +1,9 @@
-#!/usr/local/bin/Python3.5
+#!venv/bin/Python3.5
 import requests
 import json
-import oauth2 as oauth
+import re
 
 import pymongo
-import re
 from apiclient import discovery
 import httplib2
 from oauth2client.service_account import ServiceAccountCredentials
