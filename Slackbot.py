@@ -132,6 +132,8 @@ def get_progression():
                     progression[users_db.find_one({"slack_id":user})["slack_name"]][task["task_id"]]=emoji[reaction["name"]]
                 except KeyError:
                     pass
+                except IndexError:
+                    pass
     return progression
 
 def get_range(tasks_number):
