@@ -2,6 +2,8 @@ apiclient==1.0.3
 discovery==0.0.4
 google-api-python-client==1.5.3
 httplib2==0.9.2
+Jinja2==2.8
+MarkupSafe==0.23
 oauth2client==3.0.0
 pyasn1==0.1.9
 pyasn1-modules==0.0.8

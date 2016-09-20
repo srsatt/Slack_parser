@@ -1,0 +1,27 @@
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+
+  <table border="1">
+      <tr>
+      <td></td>
+      {% for i in range(progression["pavel_reutov"].__len__()) %}
+        <td>T{{i}}</td>
+      {% endfor %}
+      </tr>
+      {% for user in progression %}
+        <tr>
+          <td>{{user}}</td>
+          {% for emoji in progression[user] %}
+            <td>{{emoji}}</td>
+          {% endfor %}
+
+        </tr>
+
+      {% endfor %}
+  </table>
+
+</body>
+</html>
