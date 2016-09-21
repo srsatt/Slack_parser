@@ -1,28 +1,26 @@
 # Slackbot
+This Python script for Slack.
 
-##Основные возможности
+##capabilities
+This script can:
 
-*Сканирование истории канала и сохранение ее в БД.
+*Scan channel and get all it's history.
 
-*Экспорт лайков у каждого задания в Google Spreadsheet или же в отдельные словарь.
+*Filter channel history with regular expression.
 
-##Установка
+*Save channel history in database with user's reactions on this message.
 
-pyenv
+*Export user's reactions in Google Spreadsheet or in html table.
 
-*Для работы необходима база данных MongoDB с двумя таблицами 'Slackbot_users' и 'Slackbot_tasks'
+##Requirements
 
-*Адрес и порт задаются в переменных MONGO_ADDRESS и MONGO_PORT (по умолчанию MONGO_ADDRESS='127.0.0.1'
-MONGO_PORT=27017)
+*For python libraries look into requirements.txt.
 
-*Необходим токен для гугл таблиц. Он берется по адресу https://console.developers.google.com/apis/credentials и сохраняется в файле google.json
+*This script require MongoDB instance (it can be set with parameters MONGO_ADDRESS and MONGO_PORT).
 
-*Токен для Slack'a берется по адресу https://api.slack.com/docs/oauth и сохраняется в файле slack_token
+*Goggle token can be found here: https://console.developers.google.com/apis/credentials This token is stored in google.json file.
 
-*spreadsheetId - ID таблички в Google Spreadsheet
+*Slack token can be found here: https://api.slack.com/docs/oauth This token is stored in slack_token filename
 
-*channel_id - канал с заданиями в Slack
-
-#Запуск
-
-Программа заходит в БД, гугл таблички, и Slack. Потом читает информацию с канала с заданиями, обновляет ее в БД, после чего подключается к Google Spreadsheet и вносит изменения в таблицу. Политика при конфликте смайлов: берется более "успешный" смайл.
+##Usage
+Running Slackbot.py will parse channel and save emojis in html table "table.html". For other purposes Slackbot.py must be changed
