@@ -5,6 +5,9 @@ import json
 import re
 
 import pymongo
+from apiclient import discovery
+import httplib2
+from oauth2client.service_account import ServiceAccountCredentials
 from jinja2 import Template
 emoji={
     "+1":"👍",
@@ -15,9 +18,13 @@ emoji={
 
 #https://api.slack.com - Slack API
 #https://api.slack.com/docs/oauth  - to get token
+#https://developers.google.com/sheets/reference/query-parameters - Sheets API
+#https://console.developers.google.com/apis/credentials - to get token
+spreadsheetId="1JwA5cmuTQUWq--J0VnYKmULkcczw8YP83MHyDlf0BoE" #id of google sheets
 MONGO_ADDRESS='127.0.0.1'
 MONGO_PORT=27017
 channel_id="C2A76BCRZ"
+CREDENTIALS_FILE = 'google.json' #google auth
 
 def get_slack_token(filename):
     f1=open(filename,"r")
@@ -78,6 +85,41 @@ def invoke_from_json():
         users_db.insert(user)
     f1.close()
 
+def get_table(spreadsheetId,rangeName):
+    rangeN = "Sheet1!"+rangeName
+    result = service.spreadsheets().values().get(
+        spreadsheetId=spreadsheetId, range=rangeN).execute()
+    values = result.get('values', [])
+    return values
+
+def put_in_table(spreadsheetId,table_range,values):
+    results = service.spreadsheets().values().batchUpdate(spreadsheetId = spreadsheetId, body = {
+    "valueInputOption": "USER_ENTERED",
+    "data": [
+        {"range": "Sheet1!"+table_range,
+         "majorDimension": "ROWS",     # сначала заполнять ряды, затем столбцы (т.е. самые внутренние списки в values - это ряды)
+        # "values": [["This is B2", "This is C2"], ["This is B3", "This is C3"]]}
+         "values": values}
+    ]
+    }).execute()
+
+def add_columns(spreadsheetId,col_numbers):
+    body ={
+  "requests":
+    {
+      "insertDimension": {
+        "range": {
+          "sheetId": 0,
+          "dimension": "COLUMNS",
+          "startIndex": 2+tasks_db.count()-col_numbers,
+          "endIndex": 2+tasks_db.count()
+        },
+        #"inheritBefore": "true"
+      }
+    },
+}
+    service.spreadsheets().batchUpdate(spreadsheetId = spreadsheetId,body = body).execute()
+
 def get_progression():
     progression={}
     for user in users_db.find():
@@ -102,6 +144,31 @@ def get_range(tasks_number):
         result[:0] = chr(ord("A")+rem)
     return "C4:"+''.join(result)+"59", ''.join(result)
 
+def update_table(spreadsheetId):
+    tasks_number=tasks_db.count()
+    table_range, last_col=get_range(tasks_db.count())
+    old_data=get_table(spreadsheetId,table_range)
+    new_data=[["" for i in range(tasks_number)] for j in range(55)]
+    for i in range(tasks_db.count()):
+        new_data[0][i]="T"+str(i+1)
+    insertion_number=tasks_db.count()-old_data[0].index("SMART цель на сентябрь")
+
+    add_columns(spreadsheetId,insertion_number)
+    for task in tasks_db.find():
+        for reaction in task["reactions"]:
+            for user in reaction["users"]:
+                if (users_db.find_one({"slack_id":user})):
+                    row=int(users_db.find_one({"slack_id":user})["row"])-4
+                    col=task["task_id"]
+                    try:
+                        if((new_data[row][col]!="") and (col<old_data[0].index("SMART цель на сентябрь")) and (reaction["name"] in emoji.keys())):
+                                new_data[row][col]=emoji_comp(new_data[row][col],emoji[reaction["name"]])
+                        else:
+                                new_data[row][col]=emoji[reaction["name"]]
+                    except KeyError:
+                        pass
+    put_in_table(spreadsheetId,table_range,new_data)
+
 def make_html_table(progression):
     f1=open("template.html","r")
     template=Template(f1.read())
@@ -119,6 +186,13 @@ if __name__ == '__main__':
     db=conn['Slackbot']
     users_db=db['Slackbot_users']
     tasks_db=db['Slackbot_tasks']
+    ''' #Google spreadsheets part
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,'https://www.googleapis.com/auth/spreadsheets')
+    http = credentials.authorize(httplib2.Http())
+    discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
+                    'version=v4')
+    service = discovery.build('sheets', 'v4', http=http,discoveryServiceUrl=discoveryUrl)
+    '''
     save_tasks(filter_messages(get_channel_history(channel_id),'^([TТ])\d+'))
     html_table=make_html_table(get_progression())
     save_tabe(filename="table.html",data=html_table)
