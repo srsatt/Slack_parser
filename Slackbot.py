@@ -3,6 +3,7 @@
 import requests
 import json
 import re
+import collections
 
 import pymongo
 from jinja2 import Template
@@ -31,17 +32,25 @@ def get_channels():
     channels=json.loads(r.text)
 
 def get_channel_messages(channel_id,latest='now'):
-    url="https://slack.com/api/channels.history?token="+Slacktoken+"&channel="+channel_id+"&unreads=1&pretty=1"
+    if (latest=="now"):
+        url="https://slack.com/api/channels.history?token="+Slacktoken+"&channel="+channel_id+"&unreads=1&pretty=1"
+    else:
+        url="https://slack.com/api/channels.history?token="+Slacktoken+"&channel="+channel_id+"&unreads=1&pretty=1&latest="+latest
+
     r=requests.get(url)
     messages_body=json.loads(r.text)
-    return messages_body["messages"], int(messages_body["unread_count_display"]), messages_body["messages"][-1]['ts']
+    try:
+        return messages_body["messages"], messages_body["has_more"], messages_body["messages"][-1]["ts"]
+    except IndexError:
+        return messages_body["messages"], messages_body["has_more"], 0
 
 def get_channel_history(channel_id):
-    messages, unread_count, latest =get_channel_messages(channel_id)
-    while(unread_count):
-        new_messages, unread_count, latest =get_channel_messages(channel_id)
+    messages, has_more, latest =get_channel_messages(channel_id)
+    while(has_more):
+        new_messages, has_more, latest =get_channel_messages(channel_id,latest=latest)
         messages.extend(new_messages)
         get_channel_messages(channel_id,latest)
+
     return messages
 
 def filter_messages(messages,regexp):
@@ -55,21 +64,23 @@ def emoji_comp(reaction1,reaction2):
     else:
         return reaction1
 
-def save_tasks(tasks):
-    for x in tasks:
-        task={
-            "task_id":int(x[0][1:]),
+def save_table(messages,table,message_name):
+    for x in messages:
+        message={
+            message_name+"_id":int(re.search('\d+',x[0]).group(0)),
             "text":x[1]["text"],
+            "user":x[1]["user"]
             }
         try:
-            task["reactions"]=x[1]["reactions"]
+            message["reactions"]=x[1]["reactions"]
         except KeyError:
-            task["reactions"]=""
-        if tasks_db.find_one({'task_id':task['task_id']}):
-            for key in task.keys():
-                tasks_db.update_one({'task_id':task['task_id']},{"$set":{key:task[key]}})
+            message["reactions"]=""
+        if table.find_one({message_name+'_id':message[message_name+'_id']}):
+            for key in message.keys():
+                table.update_one({message_name+'_id':message[message_name+'_id']},{"$set":{key:message[key]}})
         else:
-            tasks_db.insert(task)
+            table.insert(message)
+
 
 def invoke_from_json():
     f1=open("users.json","r")
@@ -78,16 +89,27 @@ def invoke_from_json():
         users_db.insert(user)
     f1.close()
 
+def invoke_from_slack():
+    url="https://slack.com/api/users.list?token="+Slacktoken
+    r=requests.get(url)
+    users=json.loads(r.text)
+    for user in users['members']:
+        if users_db.find_one({'user_id':user["id"]}):
+            for key in user.keys():
+                users_db.update_one({'user_id':user['id']},{"$set":{key:user[key]}})
+        else:
+            users_db.insert(user)
+
 def get_progression():
     progression={}
     for user in users_db.find():
-        if(user["slack_name"]):
-            progression[user["slack_name"]]=[""]*tasks_db.count()
+        if(user["name"]):
+            progression[user["name"]]=[""]*tasks_db.count()
     for task in tasks_db.find():
         for reaction in task["reactions"]:
             for user in reaction["users"]:
                 try:
-                    progression[users_db.find_one({"slack_id":user})["slack_name"]][task["task_id"]]=emoji[reaction["name"]]
+                    progression[users_db.find_one({"id":user})["name"]][task["task_id"]]=emoji[reaction["name"]]
                 except KeyError:
                     pass
                 except IndexError:
@@ -102,16 +124,28 @@ def get_range(tasks_number):
         result[:0] = chr(ord("A")+rem)
     return "C4:"+''.join(result)+"59", ''.join(result)
 
-def make_html_table(progression):
-    f1=open("template.html","r")
+def get_project_list():
+    projects={}
+    for project in projects_db.find():
+        projects[project["project_id"]]={
+            "text":project["text"],
+            "author":users_db.find_one({"id":project["user"]})['name'],
+            "reactions":{reaction["name"]: [users_db.find_one({"id":user})["name"] for user in reaction["users"]] for reaction in project["reactions"]}
+        }
+    return projects
+
+def render_to_file(data,filename):
+    f1=open(filename,"r")
     template=Template(f1.read())
     f1.close()
-    return template.render(progression=progression)
+    return template.render(data=data)
 
 def save_tabe(filename,data):
     f1=open(filename,"w")
     f1.write(data)
     f1.close()
+
+
 
 if __name__ == '__main__':
     Slacktoken=get_slack_token("slack_token")
@@ -119,7 +153,12 @@ if __name__ == '__main__':
     db=conn['Slackbot']
     users_db=db['Slackbot_users']
     tasks_db=db['Slackbot_tasks']
-    save_tasks(filter_messages(get_channel_history(channel_id),'^([TТ])\d+'))
-    html_table=make_html_table(get_progression())
+    projects_db=db['Slackbot_projects']
+    invoke_from_slack()
+    #save_table(messages=filter_messages(get_channel_history(channel_id),'^([TТ])\d+'),table=tasks_db,message_name="task")
+    save_table(messages=filter_messages(get_channel_history('C2A5C1JBY'),'^\d+[.:]'),table=projects_db,message_name="project")
+    html_projects=render_to_file(filename="projects_template.html",data=collections.OrderedDict(sorted(get_project_list().items(), key=lambda t: t[0])))
+    html_table=render_to_file(filename="table_template.html",data=get_progression())
     save_tabe(filename="table.html",data=html_table)
+    save_tabe(filename="projects.html",data=html_projects)
     conn.close()

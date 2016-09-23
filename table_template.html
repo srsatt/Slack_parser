@@ -1,0 +1,27 @@
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+
+  <table border="1">
+      <tr>
+      <td></td>
+      {% for i in range(data["pavel_reutov"].__len__()) %}
+        <td>T{{i}}</td>
+      {% endfor %}
+      </tr>
+      {% for user in data %}
+        <tr>
+          <td><a href="https://heisenspaces.slack.com/team/{{user}}">{{user}}</a></td>
+          {% for emoji in data[user] %}
+            <td>{{emoji}}</td>
+          {% endfor %}
+
+        </tr>
+
+      {% endfor %}
+  </table>
+
+</body>
+</html>

@@ -1,0 +1,29 @@
+<html>
+<head>
+<meta charset="UTF-8">
+</head>
+<body>
+
+{% for id in data %}
+<div class="project">
+  <p>
+    {{data[id]["text"]}}
+
+  </p>
+  <p>
+  Author: <a href="https://heisenspaces.slack.com/team/{{data[id]["author"]}}">{{data[id]["author"]}}</a>
+  </p>
+  <div class="reactions">
+    {%for reaction in data[id]["reactions"]%}
+    <p float="left">{{reaction}}:</p>
+    <p float="right">
+    {%for user in data[id]["reactions"][reaction]%}
+    {{user}}
+    {% endfor %}</p>
+    {% endfor %}
+
+  </div>
+</div>
+{% endfor %}
+</body>
+</html>
