@@ -1,6 +1,9 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link type="text/css" rel="stylesheet" href="project.css">
+<script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
+<script src="project.js"></script>
 </head>
 <body>
 
@@ -15,11 +18,13 @@
   </p>
   <div class="reactions">
     {%for reaction in data[id]["reactions"]%}
-    <p float="left">{{reaction}}:</p>
-    <p float="right">
+    <div float="left">{{reaction}}:</div>
+    <div float="right">
     {%for user in data[id]["reactions"][reaction]%}
+    <a href="https://heisenspaces.slack.com/team/{{user}}">
     {{user}}
-    {% endfor %}</p>
+    </a>
+    {% endfor %}</div>
     {% endfor %}
 
   </div>
