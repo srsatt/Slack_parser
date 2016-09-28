@@ -1,0 +1,168 @@
+* {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+	/*font-family: "Roboto", "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+	font-family: 'Exo 2', sans-serif;
+	font-weight: 300;
+}
+
+/*NAVBAR
+___________________________________________________*/
+.logotype {
+	width: 45px;
+}
+
+.nav-main {
+	position: fixed;
+	top: 0;
+	left: 0;
+    background-color: #f2f2f2;
+    width: 100%;
+    z-index: 1000;
+}
+
+.nav-bar {
+	position: relative;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.name {
+	font-size: 1em;
+}
+
+.nav-bar h5, p {
+	margin-bottom: 0;
+}
+
+
+.p-nav {
+	margin-bottom: 0;
+}
+
+.nav-buttons {
+	text-align: center;
+	padding-top: 15px;
+	padding-bottom: 2px;
+}
+
+.brand {
+	padding-left: 16%;
+}
+
+.brand-name {
+	padding-top: 4px;
+}
+
+/*BLOCKS
+_______________________________________________*/
+.block-1 {
+	background-color: #f2f2f2;
+}
+
+.block-2 {
+  background-image:url(../images/logo_tarnsfer_ver1.2.png);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: left;
+}
+
+.block-3 {
+	background-color: #e0e0e0;
+	padding-top: 30px;
+	padding-bottom: 30px;
+}
+
+.block-4 {
+	background-color: #42ae63;
+	padding-top: 30px;
+	padding-bottom: 30px;
+	color: white;
+}
+
+.block-6 {
+	background-color: #484d52;
+	color: white;
+	padding-top: 30px;
+	padding-bottom: 30px;
+}
+
+.block-header {
+	text-align: center;
+}
+
+/*Inside BLOCKS
+_________________________________________________*/
+
+.describe {
+	padding: 10% 10% 5% 10%;
+}
+
+.describe-title {
+	text-align: center;
+}
+
+.button-row {
+	text-align: center;
+	padding-top: 30px;
+}
+
+.transfer_logo {
+	height: 400px;
+}
+
+.describe-block-2 {
+	padding-top: 25px;
+}
+
+.describe-block-2 h5 {
+	margin-bottom: 0.5rem;
+	font-size: 2rem;
+}
+
+.quest {
+	padding-bottom: 1rem;
+}
+
+.item-center {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.nav-buttons a {
+	text-decoration: none;
+	color: #222;
+}
+
+.foot {
+	text-align: center;
+	padding-top: 20px;
+}
+
+.icons {
+	font-size: 2em;
+	color: #484d52;
+}
+
+.work {
+	padding-top: 10px;
+}
+
+.container-block {
+	padding-left: 18%;
+}
+
+.avatar {
+    border: 1px solid #cecece;
+    border-radius: 100px;
+    filter: grayscale(100%);
+}
+
+.names-team {
+	text-align: center;
+}

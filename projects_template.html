@@ -1,34 +1,130 @@
 <html>
 <head>
-<meta charset="UTF-8">
-<link type="text/css" rel="stylesheet" href="project.css">
-<script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
-<script src="project.js"></script>
+
+</head>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- Basic Page Needs
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta charset="utf-8">
+  <title>HeisenHub</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!-- Mobile Specific Metas
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- FONT
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <!-- <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,100,500,700&amp;subset=latin,cyrillic" rel="stylesheet" type="text/css"> -->
+  <link href="https://fonts.googleapis.com/css?family=Exo+2:100,200,300,400" rel="stylesheet">
+  <script src="https://use.fontawesome.com/fafb9ab347.js"></script>
+
+  <!-- CSS
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+  <link rel="stylesheet" href="css/custom.css">
+
+  <!-- Favicon
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link rel="icon" type="image/png" href="images/favicon.png">
+
+  <!-- Python part
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <link type="text/css" rel="stylesheet" href="css/project.css">
+  <script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
+  <script src="project.js"></script>
 </head>
 <body>
 
-{% for id in data %}
-<div class="project">
-  <p>
-    {{data[id]["text"]}}
-
-  </p>
-  <p>
-  Author: <a href="https://heisenspaces.slack.com/team/{{data[id]["author"]}}">{{data[id]["author"]}}</a>
-  </p>
-  <div class="reactions">
-    {%for reaction in data[id]["reactions"]%}
-    <div float="left">{{reaction}}:</div>
-    <div float="right">
-    {%for user in data[id]["reactions"][reaction]%}
-    <a href="https://heisenspaces.slack.com/team/{{user}}">
-    {{user}}
-    </a>
-    {% endfor %}</div>
-    {% endfor %}
-
+  <!-- Primary Page Layout
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <div class="row nav-main">
+    <div class="twelve columns nav-bar">
+      <div class="seven columns">
+        <div class="brand">
+          <div class="one columns">
+            <img class="logotype" src="images/heisen_spaces_transparent_logo.png">
+          </div>
+          <div class="eight columns brand-name">
+            <h5>Heisen</h5>
+          </div>
+        </div>
+      </div>
+      <div class="five columns nav-buttons">
+        <div class="two columns">
+          <a href="index.html"><p class="p-nav">О НАС</p></a>
+        </div>
+        <div class="two columns">
+          <a href="projects.html"><p class="p-nav">ПРОЕКТЫ</p></a>
+        </div>
+        <div class="two columns">
+          <a href="team.html"><p class="p-nav">КОМАНДА</p></a>
+        </div>
+        <div class="four columns">
+          <a href="project_ideas.html"><p class="p-nav">ИДЕИ ПРОЕКТОВ</p></a>
+        </div>
+        <div class="offset-by-two columns"></div>
+      </div>
+    </div>
   </div>
-</div>
-{% endfor %}
+
+  <div class="block-1">
+    <div class="container describe">
+      <div class="row">
+        <div class="twelve columns">
+          <h3 class="describe-title">Команда Heisen</h3>
+          <p>Ниже расположен список проектов, которые предложили участники команды. </p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="twelve columns">
+          <!-- Python import here
+            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+            <ol>
+            {% for id in data %}
+            <li class="project">
+              <p>
+                {{data[id]["text"]}}
+              </p>
+              <p>
+              Author: <a href="https://heisenspaces.slack.com/team/{{data[id]["author"]}}">{{data[id]["author"]}}</a>
+              </p>
+              <div class="reactions">
+                {%for reaction in data[id]["reactions"]%}
+                <div class="row">
+                  <div class="twelve columns">
+
+                    <div class="one columns">
+                      {{reaction}}:
+                    </div>
+                    <div class="ten columns">
+                    {%for user in data[id]["reactions"][reaction]%}
+                    <a href="https://heisenspaces.slack.com/team/{{user}}">
+                    {{user}}
+                    </a>
+                    {% endfor %}
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </li>
+            {% endfor %}
+            </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<!-- End Document
+  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 </body>
 </html>

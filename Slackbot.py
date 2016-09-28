@@ -1,25 +1,29 @@
-#!venv/bin/Python3.5
+#!venv/bin/Python3
 # -*- coding: utf-8 -*-
-import requests
 import json
 import re
 import collections
+import os.path
+import time
 
+import schedule
+import requests
+import emoji
 import pymongo
 from jinja2 import Template
-emoji={
+
+emoji_list={
     "+1":"👍",
     "the_horns":"🤘",
     "sweat_smile":"😅",
     "rage":"😡",
     "ZZZ":"💤",}
-
 #https://api.slack.com - Slack API
 #https://api.slack.com/docs/oauth  - to get token
 MONGO_ADDRESS='127.0.0.1'
 MONGO_PORT=27017
-channel_id="C2A76BCRZ"
-
+tasks_channel='C2A76BCRZ'
+project_channel='C2A5C1JBY'
 def get_slack_token(filename):
     f1=open(filename,"r")
     token=f1.read()[:-1]
@@ -109,7 +113,7 @@ def get_progression():
         for reaction in task["reactions"]:
             for user in reaction["users"]:
                 try:
-                    progression[users_db.find_one({"id":user})["name"]][task["task_id"]]=emoji[reaction["name"]]
+                    progression[users_db.find_one({"id":user})["name"]][task["task_id"]]=emoji_list[reaction["name"]]
                 except KeyError:
                     pass
                 except IndexError:
@@ -128,11 +132,22 @@ def get_project_list():
     projects={}
     for project in projects_db.find():
         projects[project["project_id"]]={
-            "text":project["text"],
+            "text":htmlize_links(project["text"]),
             "author":users_db.find_one({"id":project["user"]})['name'],
-            "reactions":{reaction["name"]: [users_db.find_one({"id":user})["name"] for user in reaction["users"]] for reaction in project["reactions"]}
+            "reactions":{emoji.emojize(":"+reaction["name"]+":", use_aliases=True): [users_db.find_one({"id":user})["name"] for user in reaction["users"]] for reaction in project["reactions"]}
         }
     return projects
+
+def hexrepl( match ):
+    split=match.group()[1:-1].split(r'|')
+    if len(split)==2:
+        return "<a href='{adress}'>{text}<a>".format(adress=split[0],text=split[1])
+    else:
+        return "<a href='{adress}'>{text}<a>".format(adress=split[0],text=split[0])
+
+def htmlize_links(string):
+    p = re.compile('\<(.*?)(\|.*?)?\>')
+    return p.sub(hexrepl, string)
 
 def render_to_file(data,filename):
     f1=open(filename,"r")
@@ -140,25 +155,29 @@ def render_to_file(data,filename):
     f1.close()
     return template.render(data=data)
 
-def save_tabe(filename,data):
+def save_html(filename,data):
     f1=open(filename,"w")
     f1.write(data)
     f1.close()
 
+def job():
+    invoke_from_slack()
+    save_table(messages=filter_messages(get_channel_history(tasks_channel),'^([TТ])\d+'),table=tasks_db,message_name="task")
+    save_table(messages=filter_messages(get_channel_history(project_channel),'^\d+[.:]'),table=projects_db,message_name="project")
+    html_projects=render_to_file(filename="projects_template.html",data=collections.OrderedDict(sorted(get_project_list().items(), key=lambda t: t[0])))
+    html_table=render_to_file(filename="table_template.html",data=get_progression())
+    save_html(filename='progress_table.html',data=html_table)
+    save_html(filename='project_ideas.html',data=html_projects)
 
 
 if __name__ == '__main__':
-    Slacktoken=get_slack_token("slack_token")
     conn = pymongo.MongoClient(MONGO_ADDRESS,MONGO_PORT)
     db=conn['Slackbot']
     users_db=db['Slackbot_users']
     tasks_db=db['Slackbot_tasks']
     projects_db=db['Slackbot_projects']
-    invoke_from_slack()
-    #save_table(messages=filter_messages(get_channel_history(channel_id),'^([TТ])\d+'),table=tasks_db,message_name="task")
-    save_table(messages=filter_messages(get_channel_history('C2A5C1JBY'),'^\d+[.:]'),table=projects_db,message_name="project")
-    html_projects=render_to_file(filename="projects_template.html",data=collections.OrderedDict(sorted(get_project_list().items(), key=lambda t: t[0])))
-    html_table=render_to_file(filename="table_template.html",data=get_progression())
-    save_tabe(filename="table.html",data=html_table)
-    save_tabe(filename="projects.html",data=html_projects)
-    conn.close()
+    Slacktoken=get_slack_token('slack_token')
+    schedule.every(2).minutes.do(job)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)

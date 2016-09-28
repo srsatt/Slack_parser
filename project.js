@@ -1,10 +1,10 @@
 $(document).ready(function() {
-      $( "div.project" ).mouseover(function() {
+      $( "li.project" ).mouseover(function() {
       $( this ).find( "div" ).show();
       $(this).css("background", "gray");
     })
     .mouseout(function() {
     $( this ).find( "div" ).hide();
-      $(this).css("background", "white");
+    $(this).css("background", "#f2f2f2");
     });
         });
