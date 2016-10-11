@@ -39,7 +39,7 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link type="text/css" rel="stylesheet" href="css/project.css">
   <script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
-  <script src="project.js"></script>
+  <script src="js/project.js"></script>
 </head>
 <body>
 
@@ -84,7 +84,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="u-full-width">
+        <div class="u-full-width" style='overflow: scroll;'>
           <!-- Python import here
             –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 
@@ -97,6 +97,7 @@
                     {% endfor %}
                     </tr>
                   </thead>
+
                   {% for user in data %}
                     <tr>
                       <td><a href="https://heisenspaces.slack.com/team/{{user}}">{{user}}</a></td>

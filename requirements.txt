@@ -1,6 +1,5 @@
 emoji==0.3.9
 Jinja2==2.8
 MarkupSafe==0.23
-pymongo==3.3.0
 requests==2.11.1
 schedule==0.3.2
